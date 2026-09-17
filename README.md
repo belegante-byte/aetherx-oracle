@@ -1,0 +1,108 @@
+# aetherx-oracle
+
+[![PyPI version](https://img.shields.io/pypi/v/aetherx-oracle.svg)](https://pypi.org/project/aetherx-oracle/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/aetherx-oracle.svg)](https://pypi.org/project/aetherx-oracle/)
+[![Python versions](https://img.shields.io/pypi/pyversions/aetherx-oracle.svg)](https://pypi.org/project/aetherx-oracle/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+SDK Python oficial para a **Aether-X Port Congestion Oracle API** — sinais preditivos de congestão portuária, atraso de ETA e volatilidade de frete para portos globais.
+
+> Este repositório contém **apenas o SDK cliente** (MIT). O motor do oráculo, a ingestão de dados e a API FastAPI são proprietários e mantidos em repositório privado.
+
+## Documentação da API
+
+- [OpenAPI 3.1 (`docs/openapi.json`)](docs/openapi.json)
+- [OpenAPI 3.0.3 — RapidAPI (`docs/openapi.rapidapi.json`)](docs/openapi.rapidapi.json)
+- Docs interativas: https://aether-x-oracle-production.up.railway.app/docs
+
+## Exemplo executável
+
+Veja [`examples/quickstart.py`](examples/quickstart.py).
+
+## Instalação
+
+```bash
+pip install aetherx-oracle
+```
+
+## Uso rápido
+
+```python
+from aetherx import OracleClient
+
+client = OracleClient(api_key="SUA_RAPIDAPI_KEY")
+
+risk = client.get_port_risk("BRSSZ")
+
+print(risk.port_name)                 # Santos
+print(risk.country)                   # Brasil
+print(risk.congestion_score)          # 0.78
+print(risk.eta_delay_days)            # 1.6
+print(risk.waiting_vessels)           # 12
+print(risk.freight_volatility_index)  # 0.42
+print(risk.updated_at)                # 2026-09-17 15:46:53
+```
+
+## Campos retornados (`PortRisk`)
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `port_id` | `str` | UN/LOCODE do porto (ex: `BRSSZ`) |
+| `port_name` | `str` | Nome do porto |
+| `country` | `str` | País do porto |
+| `congestion_score` | `float` | Score de congestão (0.0 a 1.0) |
+| `eta_delay_days` | `float` | Atraso estimado de ETA em dias |
+| `waiting_vessels` | `int` | Navios aguardando/ancorados |
+| `freight_volatility_index` | `float` | Índice de volatilidade de frete |
+| `updated_at` | `str` | Timestamp da última atualização |
+
+## Configuração avançada
+
+```python
+client = OracleClient(
+    api_key="SUA_RAPIDAPI_KEY",
+    host="aether-x-port-congestion-oracle.p.rapidapi.com",  # default
+    timeout=30.0,                                            # segundos
+)
+```
+
+## Portos suportados
+
+Portos com dados de exemplo: `BRSSZ`, `BRRIO`, `CNSHA`, `CNNGB`, `SGSIN`, `NLRTM`, `USLAX`, `USNYC`, `DEHAM`, `MPTNG`, `AEDXB`, `KRPUS`, `GBLGP`, `ZACPT`, `MXZLO`.
+
+Portos não cadastrados retornam uma estimativa global (`country="Global"`).
+
+## Uso assíncrono (async)
+
+Para consultar múltiplos portos em paralelo (ideal para bots e fundos quantitativos). Requer o extra `async`:
+
+```bash
+pip install "aetherx-oracle[async]"
+```
+
+```python
+import asyncio
+from aetherx import OracleClient
+
+async def main():
+    client = OracleClient(api_key="SUA_RAPIDAPI_KEY")
+
+    # Um porto
+    risk = await client.get_port_risk_async("BRSSZ")
+    print(risk.congestion_score)
+
+    # Vários portos em paralelo
+    risks = await client.get_ports_risk_async(["BRSSZ", "CNSHA", "NLRTM"])
+    for r in risks:
+        print(r.port_id, r.congestion_score)
+
+asyncio.run(main())
+```
+
+## Termos de uso
+
+Os sinais são fornecidos "AS IS", sem garantia e **não constituem aconselhamento de investimento**. Consulte os [Termos de Serviço](https://aether-x-oracle-production.up.railway.app/terms).
+
+## Licença
+
+O código deste SDK é distribuído sob a licença **MIT** (veja [LICENSE](LICENSE)). O uso da API hospedada está sujeito aos Termos de Serviço.
